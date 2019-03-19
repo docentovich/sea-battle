@@ -17,6 +17,6 @@ import { MultiplayerComponent } from './multiplayer/multiplayer.component';
     AppRoutingModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: []
 })
 export class AppModule { }
