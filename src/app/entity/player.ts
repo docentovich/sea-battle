@@ -2,6 +2,10 @@ import {Board} from './board';
 import {EVENT_ENEMY_FIRE, EVENT_ENEMY_LOOSE, EVENT_LOOSE} from '../services/events.service';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
 import {Subscription} from 'rxjs';
+import {Point} from './point';
+import {Ship} from './ship';
+import {ShipTypes} from '../interfaces/ship.types';
+import {SHIPS_TYPES} from '../const';
 
 export const PLAYER_STATUS_PLAYING = 'PL1';
 export const PLAYER_STATUS_WIN = 'PL2';
@@ -10,8 +14,6 @@ export const PLAYER_STATUS_PLACING = 'PL4';
 export const PLAYER_STATUS_PENDING = 'PL5';
 
 export class Player {
-  private gameId: number;
-  private id: number;
   private playerMyBoard: Board;
   private shipsSubscriber: Subscription;
   private playerEnemyBoard: Board;
@@ -20,21 +22,55 @@ export class Player {
   private status: typeof PLAYER_STATUS_PLAYING | typeof PLAYER_STATUS_WIN | typeof PLAYER_STATUS_LOOSE
     | typeof PLAYER_STATUS_PLACING | typeof PLAYER_STATUS_PENDING;
 
-  get canMove() {
+  private placingShip: ShipTypes;
+  private resolveShip;
+  private rejectShip;
+
+  shipTypesToPlace = Object.assign({}, SHIPS_TYPES);
+
+  get canMove(): boolean {
     return this.status === PLAYER_STATUS_PLAYING;
   }
 
-  get myBoard() {
+  get canPlace(): boolean {
+    return this.myBoard.isPlacing();
+  }
+
+  get myBoard(): Board {
     return this.playerMyBoard;
   }
 
-  get enemyBoard() {
+  get enemyBoard(): Board {
     return this.playerEnemyBoard;
   }
 
-  fire(x, y) {
-    this.enemyBoard.fire(x, y);
+  get gameIsOwer() {
+    return this.status === PLAYER_STATUS_WIN || this.status === PLAYER_STATUS_LOOSE ;
+  }
+
+  get isWin() {
+    return this.status === PLAYER_STATUS_WIN;
+  }
+
+  get isLoose() {
+    return this.status === PLAYER_STATUS_LOOSE;
+  }
+
+  fire(point: Point) {
+    this.enemyBoard.fire(point.x, point.y);
     this.status = PLAYER_STATUS_PENDING;
+  }
+
+  place(point: Point) {
+    this.placingShip.leftPoints--;
+    this.myBoard.placePoint(point.x, point.y);
+
+    if (this.placingShip.leftPoints === 0) {
+      this.resolveShip(
+        new Ship(this.$events, this.placingShip.length, this.myBoard.getFlatPlacedObject())
+      );
+    }
+
   }
 
   constructor(private $events, myBoard: Board, enemyBoard: Board) {
@@ -63,6 +99,41 @@ export class Player {
         this.status = PLAYER_STATUS_LOOSE;
         this.$events.emit(EVENT_LOOSE);
       }
+    });
+  }
+
+
+  placeShips(): Promise<void> {
+    return this.placingShips()
+      .then(() => this.myBoard.stopPlacing());
+  }
+
+  private placingShips() {
+    const shipType = this.shipTypesToPlace.shift();
+
+    return this.placeShip(shipType)
+      .then((ship: Ship) => {
+        if (!ship) {
+          return;
+        }
+        this.myBoard.placeShip(ship);
+        return this.placingShips();
+      });
+  }
+
+  private placeShip(shipType: ShipTypes | null): Promise<Ship | null> {
+
+    if (!shipType) {
+      return Promise.resolve(null);
+    }
+
+    this.myBoard.startPlacing();
+    this.placingShip = shipType;
+    this.placingShip.leftPoints = shipType.length;
+
+    return new Promise((resolve, reject) => {
+      this.resolveShip = resolve;
+      this.rejectShip = reject;
     });
   }
 

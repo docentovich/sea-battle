@@ -1,3 +1,71 @@
-<p>
-  game works!
-</p>
+<ng-container *ngIf="game.player.gameIsOwer">
+    <h1 *ngIf="game.player.isWin">Победа</h1>
+    <h1 *ngIf="game.player.isLoose">Поражение</h1>
+</ng-container>
+
+<ng-container *ngIf="!game.player.gameIsOwer">
+    <table class="main-table" *ngIf="game.isPlayng; else placing;">
+        <tr>
+            <td>
+                <table class="disabled">
+                    <tr *ngFor="let points of player.myBoard.rows">
+                        <td *ngFor="let point of points">
+
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table>
+                    <tr *ngFor="let points of player.enemyBoard.rows">
+                        <td (click)="game.clickPoint(point)"
+                            ngClass="{ 'can-place': point.canFire, 'disable-cell': !point.canFire }">
+
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <ng-template #placing>
+        <h1 *ngIf="!player.myBoard.isPlacing()">Ожидаем противника</h1>
+        <table class="main-table">
+            <tr>
+                <td>
+
+                    <table *ngIf="player.myBoard.isPlacing()">
+                        <tr *ngFor="let points of player.myBoard.rows">
+                            <td *ngFor="let point of points"
+                                (click)="game.clickPoint(point)"
+                                ngClass="{ 'can-place': point.canPlace, 'disable-cell': !point.canPlace }">
+
+                            </td>
+                        </tr>
+                    </table>
+
+
+                    <table *ngIf="!player.myBoard.isPlacing()">
+                        <tr *ngFor="let points of player.myBoard.rows">
+                            <td *ngFor="let point of points"
+                                class="disable-cell">
+
+                            </td>
+                        </tr>
+                    </table>
+
+
+                </td>
+                <td>
+                    <table class="disabled">
+                        <tr *ngFor="let points of player.enemyBoard.rows">
+                            <td *ngFor="let point of points">
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </ng-template>
+</ng-container>

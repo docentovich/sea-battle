@@ -1,38 +1,130 @@
-import {Point, POINT_STATUS_BURNED, POINT_STATUS_DAMAGE, PointStatus} from './point';
+import {
+  Point,
+  POINT_STATUS_BURNED,
+  POINT_STATUS_CAN_PLACE,
+  POINT_STATUS_DAMAGE,
+  POINT_STATUS_EMPTY,
+  POINT_STATUS_PLACED,
+  PointStatus
+} from './point';
 import {EVENT_ENEMY_FIRE, EVENT_FIRE_RESPONSE, EVENT_ENEMY_LOOSE, EventsService, EVENT_FIRE, EVENT_LOOSE} from '../services/events.service';
 import {Ship} from './ship';
 import {PointsStatusFlatList} from '../interfaces/points.statuses.flat.list';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
-import {Observer, Subject} from 'rxjs';
+import {Subject} from 'rxjs';
+import {HelperService} from '../services/helper.service';
+import {PointsFlatList} from '../interfaces/points.flat.list';
+
+export const BOARD_STATUS_PLAYING = 'B1';
+export const BOARD_STATUS_PLACING = 'B2';
 
 export class Board {
   private width: number;
   private height: number;
-  private boardRows: Array<Array<Point>>;
-  private pointsFlatList: object;
-  private ships: Array<Ship>;
+  private boardRows: Array<Array<Point>> = [];
+  private pointsFlatList: PointsFlatList = {};
+  private ships: Array<Ship> = [];
   private subscription: SubscribeEvent;
   private isMyBoard;
-  public ships$: Subject<Array<Ship>>;
+  public ships$: Subject<Array<Ship>> = new Subject<Array<Ship>>();
+  private status;
 
-  getPointBy(point: Point): Point {
+  private getPointBy(point: Point | { x, y }): Point {
     return this.getPoint(point.x, point.y);
   }
 
-  getPoint(x: number, y: number): Point {
+  private getPoint(x: number, y: number): Point {
     return this.pointsFlatList[`${x}_${y}`];
   }
 
-  setPoint(point: Point) {
+  private setPoint(point: Point) {
     this.pointsFlatList[`${point.x}_${point.y}`] = point;
   }
 
-  changePointStatus(x: number, y: number, status: PointStatus) {
+  private changePointStatus(x: number, y: number, status: PointStatus) {
     this.pointsFlatList[`${x}_${y}`].status = status;
   }
 
-  changePointStatusBy(point: Point, status: PointStatus) {
+  changePointStatusBy(point: Point | { x: number, y: number }, status: PointStatus) {
     this.pointsFlatList[`${point.x}_${point.y}`].status = status;
+  }
+
+  private getFreePoints(): Array<Point> {
+    return Object.values(this.pointsFlatList)
+      .filter((point: Point) => point.status === POINT_STATUS_EMPTY);
+  }
+
+  private getCanPlacePoints(): Array<Point> {
+    return Object.values(this.pointsFlatList)
+      .filter((point: Point) => point.status === POINT_STATUS_CAN_PLACE);
+  }
+
+  getPlacedPoints(): Array<Point> {
+    return Object.values(this.pointsFlatList)
+      .filter((point: Point) => point.status === POINT_STATUS_PLACED);
+  }
+
+  getFlatPlacedObject() {
+    return this.getPlacedPoints()
+      .reduce((flatObject, point) => {
+        flatObject[`${point.x}_${point.y}`] = point;
+        return flatObject;
+      }, {});
+  }
+
+  isPlacing() {
+    return this.status === BOARD_STATUS_PLACING;
+  }
+
+  isPlaying() {
+    return this.status === BOARD_STATUS_PLAYING;
+  }
+
+  placeShip(ship: Ship) {
+    this.ships.push(ship);
+    this.ships$.next(this.ships);
+  }
+
+  batchPlaceShips(ships: Array<Ship>) {
+    this.ships = ships;
+    this.ships$.next(this.ships);
+  }
+
+  startPlacing() {
+    this.status = BOARD_STATUS_PLACING;
+    this.dropCanPlace();
+    this.getFreePoints()
+      .forEach((point: Point) => point.status = POINT_STATUS_CAN_PLACE);
+  }
+
+  placePoint(x, y) {
+    if (this.status !== BOARD_STATUS_PLACING) {
+      throw Error();
+    }
+    this.dropCanPlace();
+    this.changePointStatus(x, y, POINT_STATUS_PLACED);
+
+    this.getPlacedPoints()
+      .forEach((point: Point) => {
+
+        HelperService.pointsBesideLine(point.x, point.y)
+          .forEach(coords => {
+            if (this.getPointBy(coords).status === POINT_STATUS_EMPTY) {
+              this.changePointStatusBy(coords, POINT_STATUS_CAN_PLACE);
+            }
+          });
+
+      });
+  }
+
+  stopPlacing() {
+    this.status = BOARD_STATUS_PLAYING;
+    this.dropCanPlace();
+  }
+
+  private dropCanPlace() {
+    this.getCanPlacePoints()
+      .forEach(point => this.changePointStatusBy(point, POINT_STATUS_EMPTY));
   }
 
   get rows() {
@@ -42,9 +134,9 @@ export class Board {
   private fillBoard($events, width, height) {
     const rows = [];
 
-    for (let y = 1; y++; y <= height) {
+    for (let y = 0; y <= height; y++) {
       const points = [];
-      for (let x = 1; x++; x < width) {
+      for (let x = 0; x < width; x++) {
         const point = new Point($events, x, y);
         this.setPoint(point);
         points.push(point);
@@ -68,6 +160,9 @@ export class Board {
   fire(x, y) {
     if (this.isMyBoard) {
       return;
+    }
+    if (this.status === BOARD_STATUS_PLACING) {
+      throw Error();
     }
     const point: Point = this.getPoint(x, y);
 

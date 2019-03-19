@@ -3,19 +3,20 @@ import {Routes, RouterModule} from '@angular/router';
 import {AppComponent} from './app.component';
 import {GameComponent} from './game/game.component';
 import {MultiplayerComponent} from './multiplayer/multiplayer.component';
+import {HelperService} from './services/helper.service';
 
 const routes: Routes = [
   {
     path: '',
-    component: AppComponent,
-    pathMatch: 'full'
+    pathMatch: 'full',
+    redirectTo: 'share/' + HelperService.uniqId()
   },
   {
-    path: '/share/:id',
+    path: 'share/:id',
     component: MultiplayerComponent
   },
   {
-    path: '/game/:id',
+    path: 'game/:id',
     component: GameComponent
   },
 ];

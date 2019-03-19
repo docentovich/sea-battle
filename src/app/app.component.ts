@@ -1,6 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {HelperService} from './services/helper.service';
 import {Router} from '@angular/router';
+import {GameId} from './services/game.id';
 
 @Component({
   selector: 'app-root',
@@ -8,10 +9,9 @@ import {Router} from '@angular/router';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  constructor(private helper: HelperService, private router: Router) {
+  constructor() {
   }
 
   ngOnInit() {
-    this.router.navigate(['/share', { id: this.helper.uniqId() }]);
   }
 }

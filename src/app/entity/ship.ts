@@ -1,8 +1,9 @@
 import {EventsService} from '../services/events.service';
 import {Point, POINT_STATUS_BURNED, POINT_STATUS_DAMAGE, PointStatus} from './point';
-import {BOARD_HEIGHT, BOARD_WIDTH} from '../services/game.service';
 import {PointsFlatList} from '../interfaces/points.flat.list';
 import {PointsStatusFlatList} from '../interfaces/points.statuses.flat.list';
+import {HelperService} from '../services/helper.service';
+import {BOARD_HEIGHT, BOARD_WIDTH} from '../const';
 
 export const SHIP_STATUS_ALIVE = 'S1';
 export const SHIP_STATUS_DED = 'S2';
@@ -70,23 +71,15 @@ export class Ship {
   }
 
   burnAroundPoint(x, y, pointsMap) {
-    this.burnPoint(x - 1, y - 1, pointsMap);
-    this.burnPoint(x - 1, y, pointsMap);
-    this.burnPoint(x - 1, y + 1, pointsMap);
-
-    this.burnPoint(x, y - 1, pointsMap);
-    this.burnPoint(x, y + 1, pointsMap);
-
-    this.burnPoint(x + 1, y - 1, pointsMap);
-    this.burnPoint(x + 1, y, pointsMap);
-    this.burnPoint(x + 1, y + 1, pointsMap);
+    pointsMap = HelperService.pointsBeside(x, y)
+      .map((coords) => this.burnPoint(x, y, pointsMap));
 
     return pointsMap;
   }
 
   burnPoint(x, y, pointsMap) {
     if (x < 0 || y < 0 || x > BOARD_WIDTH || y > BOARD_HEIGHT) {
-      return;
+      return pointsMap;
     }
 
     if (!pointsMap[`${x}_${y}`]) {
@@ -94,6 +87,6 @@ export class Ship {
         x, y, status: POINT_STATUS_BURNED
       };
     }
-    return POINT_STATUS_BURNED;
+    return pointsMap;
   }
 }

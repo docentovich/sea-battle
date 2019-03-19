@@ -5,6 +5,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { GameComponent } from './game/game.component';
 import { MultiplayerComponent } from './multiplayer/multiplayer.component';
+import {GameService} from './services/game.service';
+import {EventsService} from './services/events.service';
 
 @NgModule({
   declarations: [
@@ -16,7 +18,10 @@ import { MultiplayerComponent } from './multiplayer/multiplayer.component';
     BrowserModule,
     AppRoutingModule
   ],
-  providers: [],
-  bootstrap: []
+  providers: [
+    GameService,
+    EventsService
+  ],
+  bootstrap: [ AppComponent ]
 })
 export class AppModule { }
