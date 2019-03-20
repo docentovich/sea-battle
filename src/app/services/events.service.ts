@@ -65,8 +65,10 @@ export class EventsService {
   }
 
   init( id ) {
+    const port = location.port ? ':' + location.port : '';
+
     const pusher = new Pusher(PUSHER_APP_KEY, {
-      authEndpoint: 'http://localhost:3000/pusher/auth',
+      authEndpoint: `${location.protocol}//${location.hostname}${port}/pusher/auth`,
       cluster: 'eu',
     });
 

@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {GAME_STATUS_PLACING, GAME_STATUS_PLAYING, GameService} from '../services/game.service';
-import {EVENT_FIRE, EVENT_MEMBERS_CHANGED, EVENT_PLAYER_JOINED, EVENT_PLAYER_SUBSCRIBED, EventsService} from '../services/events.service';
+import {GAME_STATUS_PLACING, GameService} from '../services/game.service';
+import {EVENT_MEMBERS_CHANGED, EVENT_PLAYER_JOINED, EventsService} from '../services/events.service';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
 
 @Component({
