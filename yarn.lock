@@ -2162,6 +2162,12 @@ fastparse@^1.1.1:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/fastparse/-/fastparse-1.1.2.tgz#91728c5a5942eced8531283c79441ee4122c35a9"
 
+faye-websocket@0.9.4:
+  version "0.9.4"
+  resolved "https://registry.yarnpkg.com/faye-websocket/-/faye-websocket-0.9.4.tgz#885934c79effb0409549e0c0a3801ed17a40cdad"
+  dependencies:
+    websocket-driver ">=0.5.1"
+
 faye-websocket@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/faye-websocket/-/faye-websocket-0.10.0.tgz#4e492f8d04dfb6f89003507f6edbf2d501e7c6f4"
@@ -4563,6 +4569,15 @@ punycode@^2.1.0:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
 
+pusher-js@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/pusher-js/-/pusher-js-4.4.0.tgz#c52e758c418f8ff9b3221b22291865ffbbc56e32"
+  dependencies:
+    faye-websocket "0.9.4"
+    tweetnacl "^1.0.0"
+    tweetnacl-util "^0.15.0"
+    xmlhttprequest "^1.8.0"
+
 pusher@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/pusher/-/pusher-2.2.0.tgz#20520e77b1f7c679ff51c2a524496a7a39d68a74"
@@ -6189,6 +6204,10 @@ xmlbuilder@~9.0.1:
 xmlhttprequest-ssl@~1.5.4:
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/xmlhttprequest-ssl/-/xmlhttprequest-ssl-1.5.5.tgz#c2876b06168aadc40e57d97e81191ac8f4398b3e"
+
+xmlhttprequest@^1.8.0:
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/xmlhttprequest/-/xmlhttprequest-1.8.0.tgz#67fe075c5c24fef39f9d65f5f7b7fe75171968fc"
 
 xregexp@4.0.0:
   version "4.0.0"

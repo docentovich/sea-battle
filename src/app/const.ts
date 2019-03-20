@@ -16,3 +16,5 @@ export const SHIPS_TYPES = [
   {length: 1},
   {length: 1},
 ];
+
+export const PUSHER_APP_KEY = '050830562651109a4451';

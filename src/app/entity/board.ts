@@ -7,7 +7,7 @@ import {
   POINT_STATUS_PLACED,
   PointStatus
 } from './point';
-import {EVENT_ENEMY_FIRE, EVENT_FIRE_RESPONSE, EVENT_ENEMY_LOOSE, EventsService, EVENT_FIRE, EVENT_LOOSE} from '../services/events.service';
+import {EVENT_ENEMY_FIRE, EVENT_FIRE_RESPONSE, EventsService} from '../services/events.service';
 import {Ship} from './ship';
 import {PointsStatusFlatList} from '../interfaces/points.statuses.flat.list';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
@@ -120,6 +120,9 @@ export class Board {
   stopPlacing() {
     this.status = BOARD_STATUS_PLAYING;
     this.dropCanPlace();
+    if (this.isMyBoard) {
+      this.subscribeOnFire();
+    }
   }
 
   private dropCanPlace() {
@@ -152,9 +155,6 @@ export class Board {
     this.height = height;
     this.boardRows = this.fillBoard($events, width, height);
     this.isMyBoard = isMyBoard;
-    if (isMyBoard) {
-      this.subscribeOnFire();
-    }
   }
 
   fire(x, y) {

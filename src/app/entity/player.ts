@@ -26,7 +26,7 @@ export class Player {
   private resolveShip;
   private rejectShip;
 
-  shipTypesToPlace = Object.assign({}, SHIPS_TYPES);
+  shipTypesToPlace = [...SHIPS_TYPES];
 
   get canMove(): boolean {
     return this.status === PLAYER_STATUS_PLAYING;
