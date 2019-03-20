@@ -1,13 +1,10 @@
 import {
   Point,
-  POINT_STATUS_BURNED,
   POINT_STATUS_CAN_PLACE,
-  POINT_STATUS_DAMAGE,
   POINT_STATUS_EMPTY,
-  POINT_STATUS_PLACED, POINT_STATUS_PLACED_BESIDE,
-  PointStatus
+  POINT_STATUS_PLACED,
 } from './point';
-import {EVENT_ENEMY_FIRE, EVENT_FIRE, EVENT_FIRE_RESPONSE, EventsService} from '../services/events.service';
+import {EVENT_ENEMY_FIRE, EVENT_FIRE, EVENT_FIRE_RESPONSE, EVENT_TOOGLE_TURN, EventsService} from '../services/events.service';
 import {Ship} from './ship';
 import {PointsStatusFlatList} from '../interfaces/points.statuses.flat.list';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
@@ -29,7 +26,7 @@ export class Board {
   public ships$: Subject<Array<Ship>> = new Subject<Array<Ship>>();
   private status;
 
-  private getPointBy(point: Point | { x, y }): Point {
+  private getPointBy(point: { x, y }): Point {
     return this.getPoint(point.x, point.y);
   }
 
@@ -39,14 +36,6 @@ export class Board {
 
   private setPoint(point: Point) {
     this.pointsFlatList[`${point.x}_${point.y}`] = point;
-  }
-
-  private changePointStatus(x: number, y: number, status: PointStatus) {
-    this.pointsFlatList[`${x}_${y}`].status = status;
-  }
-
-  changePointStatusBy(point: Point | { x: number, y: number }, status: PointStatus) {
-    this.pointsFlatList[`${point.x}_${point.y}`].status = status;
   }
 
   isPlacing() {
@@ -73,7 +62,7 @@ export class Board {
       throw Error();
     }
     this.dropCanPlace();
-    this.changePointStatus(x, y, POINT_STATUS_PLACED);
+    this.getPoint(x, y).setPlaced();
 
     this.getPlacedPoints()
       .forEach((point: Point) => {
@@ -81,7 +70,7 @@ export class Board {
         Helper.pointsBesideLine(point.x, point.y)
           .forEach(coords => {
             if (this.getPointBy(coords).status === POINT_STATUS_EMPTY) {
-              this.changePointStatusBy(coords, POINT_STATUS_CAN_PLACE);
+              this.getPointBy(coords).setPlacement();
             }
           });
 
@@ -103,7 +92,7 @@ export class Board {
   }
 
   refreshBoard() {
-    if(this.isMyBoard) {
+    if (this.isMyBoard) {
       this.status = BOARD_STATUS_PLACING;
     }
     this.fillBoard(this.width, this.height);
@@ -148,13 +137,16 @@ export class Board {
     const point: Point = this.getPoint(x, y);
 
     const subscription = this.$events.subscribe(EVENT_FIRE_RESPONSE,
-      (result: null | { pointsTransfer: PointsStatusFlatList }) => {
+      (result: null | { pointsTransfer: PointsStatusFlatList, hit: boolean }) => {
         subscription.unsubscribe();
 
-
         Object.values(result.pointsTransfer).forEach(pointExport => {
-          this.changePointStatus(pointExport.x, pointExport.y, pointExport.status);
+          this.getPointBy(pointExport).injectStatus(pointExport.status);
         });
+
+        if (!result.hit) {
+          this.$events.emit(EVENT_TOOGLE_TURN);
+        }
 
       });
 
@@ -166,27 +158,25 @@ export class Board {
    */
   private subscribeOnFire() {
     this.subscription = this.$events.subscribe(EVENT_ENEMY_FIRE, (coords) => {
-      try {
+      const ship = this.ships.find((curShip: Ship) => curShip.enemyFire(coords.x, coords.y));
 
-        const ship = this.ships.find((curShip: Ship) => curShip.enemyFire(coords.x, coords.y));
-        this.changePointStatus(
-          coords.x,
-          coords.y,
-          ship ? POINT_STATUS_DAMAGE : POINT_STATUS_BURNED
-        );
-
-        this.$events.emit(EVENT_FIRE_RESPONSE, {
-          pointsTransfer: (ship && ship.length === 0)
-            ? this.killTheShip(ship)
-            : this.getPointBy(coords).exportFlatListed(),
-        });
-
-        this.ships = this.ships.filter((curShip) => curShip.length !== 0);
-        this.ships$.next(this.ships);
-
-      } catch (e) {
-        alert(e);
+      if (!ship) {
+        this.$events.emit(EVENT_TOOGLE_TURN);
       }
+
+      ship ? this.getPointBy(coords).damagePoint()
+        : this.getPointBy(coords).burnPoint();
+
+      this.$events.emit(EVENT_FIRE_RESPONSE, {
+        pointsTransfer: (ship && ship.length === 0)
+          ? this.killTheShip(ship)
+          : this.getPointBy(coords).exportFlatListed(),
+        hit: !!ship
+      });
+
+      this.ships = this.ships.filter((curShip) => curShip.length !== 0);
+      this.ships$.next(this.ships);
+
     });
   }
 
@@ -210,21 +200,18 @@ export class Board {
   /** ===== HELPERS functions point batch statuses changing ==== **/
 
   private dropCanPlace() {
-    this.getCanPlacePoints()
-      .forEach(point => this.changePointStatusBy(point, POINT_STATUS_EMPTY));
+    this.getCanPlacePoints().forEach(point => point.setEmpty());
   }
 
   private revertCanPlaceToBeside() {
-    this.getCanPlacePoints()
-      .forEach(point => this.changePointStatusBy(point, POINT_STATUS_PLACED_BESIDE));
+    this.getCanPlacePoints().forEach(point => point.setPlacedBeside());
   }
 
   private canPlaceAllEmpty() {
-    this.getFreePoints()
-      .forEach((point: Point) => point.status = POINT_STATUS_CAN_PLACE);
+    this.getFreePoints().forEach((point: Point) => point.setPlacement());
   }
 
-  /** === helper ship sink functions */
+  /** === ship sink functions */
 
   killTheShip(ship): PointsStatusFlatList {
     let pointsMap: PointsStatusFlatList = {};
@@ -251,6 +238,10 @@ export class Board {
 
 
   __destruct() {
-    this.subscription.unsubscribe();
+    delete this.pointsFlatList;
+    delete this.boardRows;
+    delete this.ships;
+    delete this.ships$;
+    this.subscription && this.subscription.unsubscribe();
   }
 }

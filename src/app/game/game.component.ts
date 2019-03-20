@@ -46,7 +46,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   clickPoint(point: Point) {
     if (this.game.player.myBoard.isPlacing() && point.canPlace) {
-      this.game.player.place(point);
+      this.game.player.placePoint(point);
       return;
     } else if (this.game.player.myBoard.isPlaying() && point.canFire && this.player.isMyTurn) {
       this.game.player.fire(point);

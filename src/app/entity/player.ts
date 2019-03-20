@@ -1,5 +1,10 @@
 import {Board} from './board';
-import {EVENT_ENEMY_FIRE, EVENT_ENEMY_LOOSE, EVENT_ENEMY_PLACED, EVENT_LOOSE, EVENT_PLACED} from '../services/events.service';
+import {
+  EVENT_ENEMY_LOOSE,
+  EVENT_LOOSE,
+  EVENT_PLACED,
+  EVENT_TOOGLE_TURN
+} from '../services/events.service';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
 import {Subscription} from 'rxjs';
 import {Point} from './point';
@@ -18,19 +23,19 @@ export class Player {
   private playerMyBoard: Board;
   private shipsSubscriber: Subscription;
   private playerEnemyBoard: Board;
-  private subscription: SubscribeEvent;
+  private subscriptionToogleTurn: SubscribeEvent;
   private subscriptionLoose: SubscribeEvent;
-  private status: typeof PLAYER_STATUS_PLAYING | typeof PLAYER_STATUS_WIN | typeof PLAYER_STATUS_LOOSE
-    | typeof PLAYER_STATUS_PLACING | typeof PLAYER_STATUS_PENDING;
+  private status: typeof PLAYER_STATUS_PLAYING
+    | typeof PLAYER_STATUS_WIN
+    | typeof PLAYER_STATUS_LOOSE
+    | typeof PLAYER_STATUS_PLACING
+    | typeof PLAYER_STATUS_PENDING;
 
   private placingShip: ShipTypes;
   private resolveShip;
   private rejectShip;
   private temporaryObjectOfPlacingShip: PointsFlatList = {};
-
-  shipTypesToPlace = [...SHIPS_TYPES];
-
-  private myTurn = false;
+  private shipTypesToPlace = [...SHIPS_TYPES];
 
   setIsMyTurn() {
     this.status = PLAYER_STATUS_PLAYING;
@@ -58,7 +63,7 @@ export class Player {
   }
 
   get gameIsOver() {
-    return this.status === PLAYER_STATUS_WIN || this.status === PLAYER_STATUS_LOOSE ;
+    return this.status === PLAYER_STATUS_WIN || this.status === PLAYER_STATUS_LOOSE;
   }
 
   get isWin() {
@@ -71,22 +76,6 @@ export class Player {
 
   fire(point: Point) {
     this.enemyBoard.fire(point.x, point.y);
-    this.toogleTurn();
-  }
-
-  place(point: Point) {
-    this.placingShip.leftPoints--;
-    this.myBoard.placePoint(point.x, point.y);
-    this.temporaryObjectOfPlacingShip[point.pointKey()] = point;
-
-    if (this.placingShip.leftPoints === 0) {
-      this.resolveShip(
-        new Ship(this.$events, this.placingShip.length, this.temporaryObjectOfPlacingShip)
-      );
-
-      this.temporaryObjectOfPlacingShip = {};
-    }
-
   }
 
   constructor(private $events, myBoard: Board, enemyBoard: Board) {
@@ -101,6 +90,7 @@ export class Player {
     this.enemyBoard.init();
     this.subscribeOnFire();
     this.subscribeOnEnemyLoose();
+    this.subscribeOnToogleTurn();
   }
 
   private subscribeOnEnemyLoose() {
@@ -111,20 +101,22 @@ export class Player {
     });
   }
 
-  private subscribeOnFire() {
-    this.subscription = this.$events.subscribe(EVENT_ENEMY_FIRE, (coords) => {
-      this.toogleTurn();
-    });
+  private subscribeOnToogleTurn() {
+    this.subscriptionToogleTurn = this.$events.subscribe(EVENT_TOOGLE_TURN, () => this.toogleTurn());
+  }
 
+  private subscribeOnFire() {
     this.shipsSubscriber = this.myBoard.ships$.subscribe(ships => {
-      if (ships.length === 0) {
-        this.status = PLAYER_STATUS_LOOSE;
-        this.$events.emit(EVENT_LOOSE);
+      if (ships.length > 0) {
+        return;
       }
+
+      this.status = PLAYER_STATUS_LOOSE;
+      this.$events.emit(EVENT_LOOSE);
     });
   }
 
-
+  /** === place === */
   placeShips(): Promise<void> {
     return this.placingShips()
       .then(() => {
@@ -162,8 +154,22 @@ export class Player {
     });
   }
 
+  placePoint(point: Point) {
+    this.placingShip.leftPoints--;
+    this.myBoard.placePoint(point.x, point.y);
+    this.temporaryObjectOfPlacingShip[point.pointKey()] = point;
+
+    if (this.placingShip.leftPoints === 0) {
+      this.resolveShip(
+        new Ship(this.$events, this.placingShip.length, this.temporaryObjectOfPlacingShip)
+      );
+
+      this.temporaryObjectOfPlacingShip = {};
+    }
+  }
+
   __destruct() {
-    this.subscription.unsubscribe();
+    this.subscriptionToogleTurn.unsubscribe();
     this.subscriptionLoose.unsubscribe();
     this.shipsSubscriber.unsubscribe();
     this.myBoard.__destruct();

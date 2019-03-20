@@ -17,20 +17,8 @@ export class Ship {
     return this.shipLength;
   }
 
-  getPointBy(point: {x: number, y: number}) {
-    return this.getPoint(point.x, point.y);
-  }
-
   getPoint(x: number, y: number): Point {
     return this.shipPointsFlatList[`${x}_${y}`];
-  }
-
-  setPoint(point: Point) {
-    this.shipPointsFlatList[`${point.x}_${point.y}`] = point;
-  }
-
-  changePointStatus(x: number, y: number, status: PointStatus) {
-    this.shipPointsFlatList[`${x}_${y}`].status = status;
   }
 
   constructor($events: EventsService, length: number, shipPointsFlatList: PointsFlatList) {
@@ -48,8 +36,7 @@ export class Ship {
       throw Error('you can not shoot here');
     }
 
-
-    this.changePointStatus(x, y, POINT_STATUS_DAMAGE);
+    this.getPoint(x, y).damagePoint();
     this.shipLength--;
 
     return true;

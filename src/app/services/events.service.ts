@@ -14,6 +14,7 @@ export const EVENT_LOOSE = EVENT_ENEMY_LOOSE;
 export const EVENT_ENEMY_PLACED = 'client-E6';
 export const EVENT_PLACED = EVENT_ENEMY_PLACED;
 export const EVENT_MEMBERS_CHANGED = 'members-changed';
+export const EVENT_TOOGLE_TURN = 'toogle-turn';
 
 export type EventTypes = typeof EVENT_FIRE
   | typeof EVENT_FIRE_RESPONSE
@@ -22,7 +23,10 @@ export type EventTypes = typeof EVENT_FIRE
   | typeof EVENT_ENEMY_LOOSE
   | typeof EVENT_ENEMY_PLACED
   | typeof EVENT_PLAYER_SUBSCRIBED
+  | typeof EVENT_TOOGLE_TURN
   | typeof EVENT_MEMBERS_CHANGED;
+
+const LOCAL_EVENTS = [EVENT_TOOGLE_TURN, EVENT_MEMBERS_CHANGED];
 
 declare const Pusher: any;
 
@@ -36,12 +40,14 @@ export class EventsService {
   };
   private members = [];
 
+  private callEach(event, data) {
+    Object.values(this.subscriptions[event].callBacks).forEach((cb: any) => cb(data));
+  }
+
   subscribe(event: EventTypes, callBack): SubscribeEvent {
 
     if (!this.subscriptions[event]) {
-      this.pusherChannel.bind(event, (data) => {
-        Object.values(this.subscriptions[event].callBacks).forEach((cb: any) => cb(data));
-      });
+      this.pusherChannel.bind(event, (data) => this.callEach(event, data));
     }
 
     this.subscriptions[event] = this.subscriptions[event] || {callBacks: {}};
@@ -58,13 +64,19 @@ export class EventsService {
 
   emit(event: EventTypes, data?: object | null) {
     data = data || {};
+
+    if (LOCAL_EVENTS.includes(event)) {
+      this.callEach(event, data);
+      return;
+    }
+
     this.pusherChannel.trigger(event, data);
   }
 
   constructor(private gameIdService: GameId) {
   }
 
-  init( id ) {
+  init(id) {
     const port = location.port ? ':' + location.port : '';
 
     const pusher = new Pusher(PUSHER_APP_KEY, {
@@ -79,7 +91,7 @@ export class EventsService {
       this.membersChanged();
     });
     this.pusherChannel.bind('pusher:subscription_succeeded', members => {
-      this.members = Object.keys( members.members );
+      this.members = Object.keys(members.members);
       this.membersChanged();
     });
     this.pusherChannel.bind('pusher:member_removed', (member: any) => {

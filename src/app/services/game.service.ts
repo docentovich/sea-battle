@@ -74,6 +74,7 @@ export class GameService {
 
   restartGame() {
     this.gameStatus = GAME_STATUS_PENDING;
+    this.player && this.player.__destruct();
     this.player = new Player(
       this.$events,
       new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, true),

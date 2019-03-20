@@ -24,27 +24,23 @@ export class Point {
   id;
 
   get canPlace() {
-    return this.status === POINT_STATUS_CAN_PLACE;
-  }
-
-  canPlaceFn() {
-    return this.status === POINT_STATUS_CAN_PLACE;
+    return this.pointStatus === POINT_STATUS_CAN_PLACE;
   }
 
   get canFire() {
-    return this.status !== POINT_STATUS_BURNED && this.status !== POINT_STATUS_DAMAGE;
+    return this.pointStatus !== POINT_STATUS_BURNED && this.pointStatus !== POINT_STATUS_DAMAGE;
   }
 
   get isPlaced() {
-    return this.status === POINT_STATUS_PLACED || this.status === POINT_STATUS_DAMAGE;
+    return this.pointStatus === POINT_STATUS_PLACED || this.pointStatus === POINT_STATUS_DAMAGE;
   }
 
   get isDamage() {
-    return this.status === POINT_STATUS_DAMAGE;
+    return this.pointStatus === POINT_STATUS_DAMAGE;
   }
 
   get isBurned() {
-    return this.status === POINT_STATUS_BURNED;
+    return this.pointStatus === POINT_STATUS_BURNED;
   }
 
   get x() {
@@ -59,24 +55,40 @@ export class Point {
     return this.pointStatus;
   }
 
-  set status(newStatus: PointStatus) {
-    this.pointStatus = newStatus;
-  }
-
   burnPoint() {
-    if (this.status !== POINT_STATUS_DAMAGE) {
-      this.status = POINT_STATUS_BURNED;
+    if (this.pointStatus !== POINT_STATUS_DAMAGE) {
+      this.pointStatus = POINT_STATUS_BURNED;
     }
   }
 
   damagePoint() {
-    this.status = POINT_STATUS_DAMAGE;
+    this.pointStatus = POINT_STATUS_DAMAGE;
+  }
+
+  setPlacement() {
+    this.pointStatus = POINT_STATUS_CAN_PLACE;
+  }
+
+  setEmpty() {
+    this.pointStatus = POINT_STATUS_EMPTY;
+  }
+
+  setPlaced() {
+    this.pointStatus = POINT_STATUS_PLACED;
+  }
+
+  injectStatus(status) {
+    this.pointStatus = status;
+  }
+
+  setPlacedBeside() {
+    this.pointStatus = POINT_STATUS_PLACED_BESIDE;
   }
 
   constructor(x: number, y: number) {
     this.pX = x;
     this.pY = y;
-    this.status = POINT_STATUS_EMPTY;
+    this.pointStatus = POINT_STATUS_EMPTY;
     this.id = Helper.uniqId();
   }
 
@@ -94,7 +106,7 @@ export class Point {
     return {
       x: this.x,
       y: this.y,
-      status: this.status
+      status: this.pointStatus
     };
   }
 }
