@@ -1,44 +1,66 @@
-<ng-container *ngIf="game.player.gameIsOwer">
-    <h1 *ngIf="game.player.isWin">Победа</h1>
-    <h1 *ngIf="game.player.isLoose">Поражение</h1>
+<ng-container>
+    <h1 *ngIf="game.isWin">Победа</h1>
+    <h1 *ngIf="game.isLoose">Поражение</h1>
+    <h1 *ngIf="game.isPlayng">Игра</h1>
+    <h1 *ngIf="game.isPlacing">Размещение</h1>
+    <h1 *ngIf="game.isOver">Игра окончена</h1>
 </ng-container>
 
-<ng-container *ngIf="!game.player.gameIsOwer">
-    <table class="main-table" *ngIf="game.isPlayng; else placing;">
-        <tr>
-            <td>
-                <table class="disabled">
-                    <tr *ngFor="let points of player.myBoard.rows">
-                        <td *ngFor="let point of points">
+<ng-container *ngIf="!game.isOver">
 
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td>
-                <table>
-                    <tr *ngFor="let points of player.enemyBoard.rows">
-                        <td (click)="game.clickPoint(point)"
-                            ngClass="{ 'can-place': point.canFire, 'disable-cell': !point.canFire }">
+    <ng-container *ngIf="game.isPlayng; else placing;">
+        <h2>{{ game.player.isMyTurn ? 'Ваш ход' : 'Ждем противника' }}</h2>
 
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
+        <table class="main-table">
+            <tr>
+                <th>Your side</th>
+                <th>Enemy side</th>
+            </tr>
+            <tr>
+                <td>
+                    <table class="disabled">
+                        <tr *ngFor="let points of player.myBoard.rows">
+                            <td *ngFor="let point of points"
+                                [ngClass]="{ 'damaged': point.isDamage , 'burned': point.isBurned , 'placed': point.isPlaced } ">
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <table [ngClass]="{'enemy-disabled' : !game.player.isMyTurn }">
+                        <tr *ngFor="let points of player.enemyBoard.rows">
+                            <td *ngFor="let point of points"
+                                (click)="clickPoint(point)"
+                                [ngClass]="{ 'can-fire': point.canFire, 'damaged': point.isDamage , 'burned': point.isBurned }">
+
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </ng-container>
+
 
     <ng-template #placing>
-        <h1 *ngIf="!player.myBoard.isPlacing()">Ожидаем противника</h1>
+        <h2 *ngIf="!player.myBoard.isPlacing()">Ожидаем противника</h2>
         <table class="main-table">
+            <tr>
+                <th>Your side</th>
+                <th>Enemy side</th>
+            </tr>
             <tr>
                 <td>
 
-                    <table *ngIf="player.myBoard.isPlacing()">
+                    <table *ngIf="player.myBoard.isPlacing()" class="placing">
                         <tr *ngFor="let points of player.myBoard.rows">
                             <td *ngFor="let point of points"
-                                (click)="game.clickPoint(point)"
-                                ngClass="{ 'can-place': point.canPlace, 'disable-cell': !point.canPlace }">
+                                (click)="clickPoint(point)"
+                                [ngClass]="{
+                                        'can-place': point.canPlace,
+                                        'disable-cell': !point.canPlace && !point.isPlaced,
+                                        'placed': point.isPlaced
+                                    }">
 
                             </td>
                         </tr>

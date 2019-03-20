@@ -1,7 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {HelperService} from './services/helper.service';
-import {Router} from '@angular/router';
-import {GameId} from './services/game.id';
+import {GameService} from './services/game.service';
 
 @Component({
   selector: 'app-root',

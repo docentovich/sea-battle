@@ -1,4 +1,6 @@
 import {EVENT_FIRE, EVENT_FIRE_RESPONSE, EventsService} from '../services/events.service';
+import {Helper} from '../helper';
+import {PointsStatusFlatList} from '../interfaces/points.statuses.flat.list';
 
 export const POINT_STATUS_EMPTY = 'P1';
 export const POINT_STATUS_PLACED = 'P2';
@@ -8,20 +10,41 @@ export const POINT_STATUS_PENDING = 'P5';
 export const POINT_STATUS_PLACED_BESIDE = 'P6';
 export const POINT_STATUS_CAN_PLACE = 'P7';
 
-export type PointStatus = typeof POINT_STATUS_EMPTY | typeof POINT_STATUS_PLACED | typeof POINT_STATUS_PLACED_BESIDE
-  | typeof POINT_STATUS_BURNED | typeof POINT_STATUS_DAMAGE | typeof POINT_STATUS_CAN_PLACE;
+export type PointStatus = typeof POINT_STATUS_EMPTY
+  | typeof POINT_STATUS_PLACED
+  | typeof POINT_STATUS_PLACED_BESIDE
+  | typeof POINT_STATUS_BURNED
+  | typeof POINT_STATUS_DAMAGE
+  | typeof POINT_STATUS_CAN_PLACE;
 
 export class Point {
   private pX: number;
   private pY: number;
   private pointStatus: PointStatus;
+  id;
 
   get canPlace() {
     return this.status === POINT_STATUS_CAN_PLACE;
   }
 
+  canPlaceFn() {
+    return this.status === POINT_STATUS_CAN_PLACE;
+  }
+
   get canFire() {
     return this.status !== POINT_STATUS_BURNED && this.status !== POINT_STATUS_DAMAGE;
+  }
+
+  get isPlaced() {
+    return this.status === POINT_STATUS_PLACED || this.status === POINT_STATUS_DAMAGE;
+  }
+
+  get isDamage() {
+    return this.status === POINT_STATUS_DAMAGE;
+  }
+
+  get isBurned() {
+    return this.status === POINT_STATUS_BURNED;
   }
 
   get x() {
@@ -40,26 +63,34 @@ export class Point {
     this.pointStatus = newStatus;
   }
 
-  constructor(private $events: EventsService, x: number, y: number) {
+  burnPoint() {
+    if (this.status !== POINT_STATUS_DAMAGE) {
+      this.status = POINT_STATUS_BURNED;
+    }
+  }
+
+  damagePoint() {
+    this.status = POINT_STATUS_DAMAGE;
+  }
+
+  constructor(x: number, y: number) {
     this.pX = x;
     this.pY = y;
     this.status = POINT_STATUS_EMPTY;
+    this.id = Helper.uniqId();
   }
 
-  setEventsService($events: EventsService) {
-    this.$events = $events;
+  exportFlatListed(): any {
+    return {
+      [this.pointKey()]: this.export()
+    };
   }
 
-  fire() {
-    const subscription = this.$events.subscribe(EVENT_FIRE_RESPONSE, (newStatus) => {
-      this.status = newStatus;
-      subscription.unsubscribe();
-    });
-
-    this.$events.emit(EVENT_FIRE, {x: this.pX, y: this.pY});
+  pointKey() {
+    return `${this.x}_${this.y}`;
   }
 
-  export() {
+  export(): { x: number; y: number; status: PointStatus; } {
     return {
       x: this.x,
       y: this.y,
@@ -67,3 +98,4 @@ export class Point {
     };
   }
 }
+

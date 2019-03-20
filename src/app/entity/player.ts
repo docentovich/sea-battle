@@ -1,11 +1,12 @@
 import {Board} from './board';
-import {EVENT_ENEMY_FIRE, EVENT_ENEMY_LOOSE, EVENT_LOOSE} from '../services/events.service';
+import {EVENT_ENEMY_FIRE, EVENT_ENEMY_LOOSE, EVENT_ENEMY_PLACED, EVENT_LOOSE, EVENT_PLACED} from '../services/events.service';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
 import {Subscription} from 'rxjs';
 import {Point} from './point';
 import {Ship} from './ship';
 import {ShipTypes} from '../interfaces/ship.types';
 import {SHIPS_TYPES} from '../const';
+import {PointsFlatList} from '../interfaces/points.flat.list';
 
 export const PLAYER_STATUS_PLAYING = 'PL1';
 export const PLAYER_STATUS_WIN = 'PL2';
@@ -25,12 +26,24 @@ export class Player {
   private placingShip: ShipTypes;
   private resolveShip;
   private rejectShip;
+  private temporaryObjectOfPlacingShip: PointsFlatList = {};
 
   shipTypesToPlace = [...SHIPS_TYPES];
 
-  get canMove(): boolean {
+  private myTurn = false;
+
+  setIsMyTurn() {
+    this.status = PLAYER_STATUS_PLAYING;
+  }
+
+  toogleTurn() {
+    this.status = this.isMyTurn ? PLAYER_STATUS_PENDING : PLAYER_STATUS_PLAYING;
+  }
+
+  get isMyTurn() {
     return this.status === PLAYER_STATUS_PLAYING;
   }
+
 
   get canPlace(): boolean {
     return this.myBoard.isPlacing();
@@ -44,7 +57,7 @@ export class Player {
     return this.playerEnemyBoard;
   }
 
-  get gameIsOwer() {
+  get gameIsOver() {
     return this.status === PLAYER_STATUS_WIN || this.status === PLAYER_STATUS_LOOSE ;
   }
 
@@ -58,17 +71,20 @@ export class Player {
 
   fire(point: Point) {
     this.enemyBoard.fire(point.x, point.y);
-    this.status = PLAYER_STATUS_PENDING;
+    this.toogleTurn();
   }
 
   place(point: Point) {
     this.placingShip.leftPoints--;
     this.myBoard.placePoint(point.x, point.y);
+    this.temporaryObjectOfPlacingShip[point.pointKey()] = point;
 
     if (this.placingShip.leftPoints === 0) {
       this.resolveShip(
-        new Ship(this.$events, this.placingShip.length, this.myBoard.getFlatPlacedObject())
+        new Ship(this.$events, this.placingShip.length, this.temporaryObjectOfPlacingShip)
       );
+
+      this.temporaryObjectOfPlacingShip = {};
     }
 
   }
@@ -80,6 +96,9 @@ export class Player {
   }
 
   init() {
+    this.temporaryObjectOfPlacingShip = {};
+    this.myBoard.init();
+    this.enemyBoard.init();
     this.subscribeOnFire();
     this.subscribeOnEnemyLoose();
   }
@@ -87,14 +106,14 @@ export class Player {
   private subscribeOnEnemyLoose() {
     this.subscriptionLoose = this.$events.subscribe(EVENT_ENEMY_LOOSE, () => {
       this.subscriptionLoose.unsubscribe();
-      console.log('win');
+      alert('win');
       this.status = PLAYER_STATUS_WIN;
     });
   }
 
   private subscribeOnFire() {
     this.subscription = this.$events.subscribe(EVENT_ENEMY_FIRE, (coords) => {
-      this.status = PLAYER_STATUS_PLAYING;
+      this.toogleTurn();
     });
 
     this.shipsSubscriber = this.myBoard.ships$.subscribe(ships => {
@@ -108,7 +127,10 @@ export class Player {
 
   placeShips(): Promise<void> {
     return this.placingShips()
-      .then(() => this.myBoard.stopPlacing());
+      .then(() => {
+        this.myBoard.stopPlacing();
+        this.$events.emit(EVENT_PLACED);
+      });
   }
 
   private placingShips() {

@@ -1,4 +1,85 @@
-.main-table table td{
-  width: 20px;
-  height: 20px;
+.main-table {
+  width: 100%;
+  td {
+    margin: 50px;
+  }
+
+  td,th{
+    text-align: center;
+  }
 }
+
+.main-table table {
+  margin: auto;
+
+  td.disable-cell{
+    cursor: not-allowed !important;
+    background: #bfbfbf !important;
+  }
+
+  &.disabled td, &.enemy-disabled td{
+    cursor: not-allowed !important;
+  }
+
+  td{
+    width: 20px;
+    height: 20px;
+    border: solid 1px #e4e4e4;
+    position: relative;
+  }
+
+  /** game process */
+  td.can-fire {
+    cursor: pointer;
+    background: #fff;
+  }
+
+  td.can-fire:hover {
+    background: #b8bf12;
+  }
+
+  td.damaged{
+    border: black 1px solid;
+
+    &:after {
+      content: "X";
+      color: red;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      position: absolute;
+    }
+
+  }
+
+  td.burned {
+    background-image: linear-gradient(45deg, #000000 35.71%, #3D6F8E 35.71%, #3D6F8E 50%, #000000 50%, #000000 85.71%, #3D6F8E 85.71%, #3D6F8E 100%);
+    background-size: 9.90px 9.90px;
+  }
+
+  td.placed {
+    background: #ffffff;
+    border: black 1px solid;
+  }
+
+  /** placing */
+  &.placing td {
+    background: #bfbfbf;
+  }
+
+  &.placing td.placed {
+    background: #ffffff;
+    border: black 1px solid;
+  }
+
+  td.can-place{
+    cursor: pointer;
+    background: #fff;
+  }
+
+  td.can-place:hover{
+    background: #b8bf12;
+  }
+
+}
+

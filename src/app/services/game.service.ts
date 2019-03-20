@@ -9,8 +9,9 @@ import {BOARD_HEIGHT, BOARD_WIDTH} from '../const';
 export const GAME_STATUS_PENDING = 'G1';
 export const GAME_STATUS_PLAYING = 'G2';
 export const GAME_STATUS_PLACING = 'G3';
+export const GAME_STATUS_OVER = 'G4';
 
-export type GameStatuses = typeof GAME_STATUS_PENDING | typeof GAME_STATUS_PLAYING | typeof GAME_STATUS_PLACING;
+export type GameStatuses = typeof GAME_STATUS_PENDING | typeof GAME_STATUS_PLAYING | typeof GAME_STATUS_PLACING | typeof GAME_STATUS_OVER;
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,16 @@ export class GameService {
   private gameStatus: GameStatuses;
   public player: Player;
   private enemyReady = false;
+
+
+  connect(id: number) {
+    if (!!this.gameIdService.id) {
+      return;
+    }
+
+    this.gameIdService.id = id;
+    this.$events.init(id);
+  }
 
   get status() {
     return this.gameStatus;
@@ -32,8 +43,16 @@ export class GameService {
     return this.gameIdService.id;
   }
 
-  set id(value) {
-    this.gameIdService.id = value;
+  get isOver() {
+    return this.player.gameIsOver;
+  }
+
+  get isWin() {
+    return !this.player.gameIsOver && this.player.isWin;
+  }
+
+  get isLoose() {
+    return !this.player.gameIsOver && this.player.isLoose;
   }
 
   get isPlacing() {
@@ -41,7 +60,7 @@ export class GameService {
   }
 
   get isPlayng() {
-    return this.status === GAME_STATUS_PLAYING;
+    return this.status === GAME_STATUS_PLAYING && !this.player.gameIsOver;
   }
 
   get link() {
@@ -50,6 +69,11 @@ export class GameService {
   }
 
   constructor(private $events: EventsService, private gameIdService: GameId) {
+    this.restartGame();
+  }
+
+  restartGame() {
+    this.gameStatus = GAME_STATUS_PENDING;
     this.player = new Player(
       this.$events,
       new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, true),
@@ -65,9 +89,9 @@ export class GameService {
     });
   }
 
-  initGame() {
-    this.gameStatus = GAME_STATUS_PENDING;
+  init() {
     this.player.init();
+    this.enemyReady = false;
     this.subscribeOnChangeGameStatus();
   }
 
@@ -84,16 +108,6 @@ export class GameService {
   private tryStartGame() {
     if (this.enemyReady && !this.player.myBoard.isPlacing()) {
       this.gameStatus = GAME_STATUS_PLAYING;
-    }
-  }
-
-
-  clickPoint(point: Point) {
-    if (this.player.myBoard.isPlacing() && point.canPlace) {
-      this.player.place(point);
-      return;
-    } else if (!this.player.myBoard.isPlaying() && point.canFire) {
-      this.player.fire(point);
     }
   }
 

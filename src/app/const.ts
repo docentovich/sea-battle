@@ -9,9 +9,7 @@ export const SHIPS_TYPES = [
 
   {length: 2},
   {length: 2},
-  {length: 2},
 
-  {length: 1},
   {length: 1},
   {length: 1},
   {length: 1},
