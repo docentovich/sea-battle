@@ -82,7 +82,9 @@ export class Point {
   }
 
   setPlacedBeside() {
-    this.pointStatus = POINT_STATUS_PLACED_BESIDE;
+    if (this.pointStatus !== POINT_STATUS_PLACED) {
+      this.pointStatus = POINT_STATUS_PLACED_BESIDE;
+    }
   }
 
   constructor(x: number, y: number) {

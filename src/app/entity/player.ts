@@ -169,9 +169,9 @@ export class Player {
   }
 
   __destruct() {
-    this.subscriptionToogleTurn.unsubscribe();
-    this.subscriptionLoose.unsubscribe();
-    this.shipsSubscriber.unsubscribe();
+    this.subscriptionToogleTurn && this.subscriptionToogleTurn.unsubscribe();
+    this.subscriptionToogleTurn && this.subscriptionLoose.unsubscribe();
+    this.shipsSubscriber && this.shipsSubscriber.unsubscribe();
     this.myBoard.__destruct();
     this.enemyBoard.__destruct();
   }

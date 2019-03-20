@@ -49,6 +49,7 @@ export class Board {
   placeShip(ship: Ship) {
     this.ships.push(ship);
     this.ships$.next(this.ships);
+    this.blockAroundTheShip(ship);
   }
 
   startPlacing() {
@@ -236,6 +237,18 @@ export class Board {
     return pointsMap;
   }
 
+  /**
+   * block around ship functions
+   */
+  private blockAroundTheShip(ship) {
+    Object.values(ship.getPoints()).forEach((point: Point) => {
+      Helper.pointsBeside(point.x, point.y)
+        .map((coords) => {
+          point = this.getPointBy(coords);
+          point.setPlacedBeside();
+        });
+    });
+  }
 
   __destruct() {
     delete this.pointsFlatList;
