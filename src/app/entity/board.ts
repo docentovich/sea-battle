@@ -134,6 +134,10 @@ export class Board {
     return this.boardRows;
   }
 
+  refreshBoard() {
+    this.fillBoard(this.$events, this.width, this.height);
+  }
+
   private fillBoard($events, width, height) {
     const rows = [];
 

@@ -77,6 +77,9 @@ export class Player {
     this.status = PLAYER_STATUS_PLACING;
     this.playerMyBoard = myBoard;
     this.playerEnemyBoard = enemyBoard;
+  }
+
+  init() {
     this.subscribeOnFire();
     this.subscribeOnEnemyLoose();
   }

@@ -50,7 +50,11 @@ export class GameService {
   }
 
   constructor(private $events: EventsService, private gameIdService: GameId) {
-
+    this.player = new Player(
+      this.$events,
+      new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, true),
+      new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, false),
+    );
   }
 
   private subscribeOnChangeGameStatus() {
@@ -63,11 +67,7 @@ export class GameService {
 
   initGame() {
     this.gameStatus = GAME_STATUS_PENDING;
-    this.player = new Player(
-      this.$events,
-      new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, true),
-      new Board(this.$events, BOARD_WIDTH, BOARD_HEIGHT, false),
-    );
+    this.player.init();
     this.subscribeOnChangeGameStatus();
   }
 

@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {GAME_STATUS_PLACING, GAME_STATUS_PLAYING, GameService} from '../services/game.service';
-import {EVENT_FIRE, EVENT_PLAYER_JOINED, EVENT_PLAYER_SUBSCRIBED, EventsService} from '../services/events.service';
+import {EVENT_FIRE, EVENT_MEMBERS_CHANGED, EVENT_PLAYER_JOINED, EVENT_PLAYER_SUBSCRIBED, EventsService} from '../services/events.service';
 import {SubscribeEvent} from '../interfaces/subscribe.event';
 
 @Component({
@@ -25,25 +25,18 @@ export class MultiplayerComponent implements OnInit {
     this.game.id = this.activatedRoute.snapshot.params['id'];
     this.events.initPusher();
     this.game.initGame();
-    let players = 0;
 
-    this.subscriptionJoined = this.events.subscribe(EVENT_PLAYER_JOINED, (data) => {
-      players++;
-      this.checkPlayersJoined(players);
-    });
-    this.subscriptionSubscribed = this.events.subscribe(EVENT_PLAYER_SUBSCRIBED, (members) => {
-      players = members.count;
-      this.checkPlayersJoined(players);
+    const subscription = this.events.subscribe(EVENT_MEMBERS_CHANGED, (members) => {
+      if (members.length !== 2) {
+        return;
+      }
+      this.game.status = GAME_STATUS_PLACING;
+      subscription.unsubscribe();
+      this.router.navigate(['/game', this.game.id]);
     });
   }
 
-  private checkPlayersJoined(players) {
-    if (players !== 2) {
-      return;
-    }
-    this.game.status = GAME_STATUS_PLACING;
-    this.subscriptionJoined.unsubscribe();
-    this.subscriptionSubscribed.unsubscribe();
-    this.router.navigate(['/game', this.game.id]);
+  private checkPlayersJoined(members) {
+
   }
 }

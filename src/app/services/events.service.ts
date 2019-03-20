@@ -13,6 +13,7 @@ export const EVENT_ENEMY_FIRE = EVENT_FIRE;
 export const EVENT_ENEMY_LOOSE = 'client-E5';
 export const EVENT_LOOSE = EVENT_ENEMY_LOOSE;
 export const EVENT_ENEMY_PLACED = 'client-E6';
+export const EVENT_MEMBERS_CHANGED = 'members-changed';
 
 export type EventTypes = typeof EVENT_FIRE
   | typeof EVENT_FIRE_RESPONSE
@@ -20,7 +21,8 @@ export type EventTypes = typeof EVENT_FIRE
   | typeof EVENT_ENEMY_FIRE
   | typeof EVENT_ENEMY_LOOSE
   | typeof EVENT_ENEMY_PLACED
-  | typeof EVENT_PLAYER_SUBSCRIBED;
+  | typeof EVENT_PLAYER_SUBSCRIBED
+  | typeof EVENT_MEMBERS_CHANGED;
 
 declare const Pusher: any;
 
@@ -29,7 +31,10 @@ declare const Pusher: any;
 })
 export class EventsService {
   private pusherChannel: any;
-  private subscriptions = {};
+  private subscriptions = {
+    [EVENT_MEMBERS_CHANGED]: {callBacks: {}}
+  };
+  private members = [];
 
   subscribe(event: EventTypes, callBack): SubscribeEvent {
 
@@ -67,5 +72,28 @@ export class EventsService {
 
     this.pusherChannel = pusher.subscribe('presence-' + this.gameIdService.id);
 
+    this.pusherChannel.bind('pusher:member_added', member => {
+      debugger;
+      this.members.push(member.id);
+      this.membersChanged();
+    });
+    this.pusherChannel.bind('pusher:subscription_succeeded', members => {
+      debugger;
+
+      this.members = Object.keys( members.members );
+      this.membersChanged();
+    });
+    this.pusherChannel.bind('pusher:member_removed', (member: any) => {
+      debugger;
+
+      this.members = this.members.filter(mbmr => mbmr !== member.id);
+      this.membersChanged();
+    });
+
+  }
+
+  membersChanged() {
+    Object.values(this.subscriptions[EVENT_MEMBERS_CHANGED].callBacks)
+      .forEach((cb: any) => cb(this.members));
   }
 }
